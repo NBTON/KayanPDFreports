@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ProjectFormData, ProjectFormSchema } from './types';
 import {
@@ -24,6 +24,8 @@ export const App: React.FC = () => {
     return loadDraftFromStorage();
   }, []);
 
+  const prevSavedDataRef = useRef<string>(JSON.stringify(initialValues));
+
   const {
     register,
     control,
@@ -42,15 +44,21 @@ export const App: React.FC = () => {
     name: 'scopeItems',
   });
 
-  const formData = watch();
+  const watchedData = useWatch({ control });
+  const formData: ProjectFormData = (watchedData as ProjectFormData) || initialValues;
 
-  // Compute live calculations
+  // Compute live calculations memoized from semantic form data
   const calculations = useMemo(() => {
     return calculateProjectMetrics(formData);
   }, [formData]);
 
-  // Auto-save draft to local storage on changes
+  // Auto-save draft to local storage only when semantic form values change
   useEffect(() => {
+    const currentSerialized = JSON.stringify(formData);
+    if (currentSerialized === prevSavedDataRef.current) {
+      return;
+    }
+    prevSavedDataRef.current = currentSerialized;
     setSaveStatus('Saving...');
     const timer = setTimeout(() => {
       saveDraftToStorage(formData);
@@ -60,23 +68,31 @@ export const App: React.FC = () => {
   }, [formData]);
 
   const handleLoadExample = () => {
+    prevSavedDataRef.current = JSON.stringify(GHAZLAN_EXAMPLE_DATA);
     reset(GHAZLAN_EXAMPLE_DATA);
     saveDraftToStorage(GHAZLAN_EXAMPLE_DATA);
+    setSaveStatus('Draft Saved Locally');
   };
 
   const handleLoadLargeExample = () => {
+    prevSavedDataRef.current = JSON.stringify(LARGE_20_ROW_EXAMPLE_DATA);
     reset(LARGE_20_ROW_EXAMPLE_DATA);
     saveDraftToStorage(LARGE_20_ROW_EXAMPLE_DATA);
+    setSaveStatus('Draft Saved Locally');
   };
 
   const handleResetDefault = () => {
+    prevSavedDataRef.current = JSON.stringify(INITIAL_DEMO_DATA);
     reset(INITIAL_DEMO_DATA);
     saveDraftToStorage(INITIAL_DEMO_DATA);
+    setSaveStatus('Draft Saved Locally');
   };
 
   const handleClearAll = () => {
+    prevSavedDataRef.current = JSON.stringify(EMPTY_FORM_DATA);
     reset(EMPTY_FORM_DATA);
     clearDraftFromStorage();
+    setSaveStatus('Draft Saved Locally');
   };
 
   const handleToggleReconciliationNote = (val: boolean) => {
@@ -138,7 +154,7 @@ export const App: React.FC = () => {
           </div>
 
           {/* Right / Bottom: PDF Preview & Download (5 cols on XL) */}
-          <div className="xl:col-span-5 sticky top-20">
+          <div className="xl:col-span-5 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] flex flex-col">
             <PdfPreviewPanel
               data={formData}
               calculations={calculations}

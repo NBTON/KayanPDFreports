@@ -15,16 +15,15 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
   
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState<boolean>(true);
-  const [isInitialRender, setIsInitialRender] = useState<boolean>(true);
   const [renderError, setRenderError] = useState<string | null>(null);
   
   const currentUrlRef = useRef<string | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef<boolean>(true);
+  const isInitialMountRef = useRef<boolean>(true);
   const renderSeqRef = useRef<number>(0);
-
-  // Keep track of currentUrlRef
-  currentUrlRef.current = pdfUrl;
+  const lastRenderedDataRef = useRef<string>('');
+  const revocationTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const generatePdfBlob = useCallback(async (formData: ProjectFormData, formCalcs: ProjectCalculations) => {
     if (!formCalcs.canExport) {
@@ -41,7 +40,7 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
       const pdfInstance = pdf(doc);
       const blob = await pdfInstance.toBlob();
 
-      // If a newer render was requested while this one was computing, discard this result
+      // Discard if component unmounted or a newer render sequence was started
       if (!isMountedRef.current || seq !== renderSeqRef.current) {
         return;
       }
@@ -49,39 +48,55 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
       const newUrl = URL.createObjectURL(blob);
       const oldUrl = currentUrlRef.current;
 
+      currentUrlRef.current = newUrl;
+      lastRenderedDataRef.current = JSON.stringify(formData);
+      isInitialMountRef.current = false;
       setPdfUrl(newUrl);
-      setIsInitialRender(false);
       setIsRendering(false);
 
-      // Revoke the old URL with a safe 3-second delay so the iframe has time to load the new one
+      // Safely revoke the old URL with a 3-second delay to allow the browser PDF viewer to transition smoothly
       if (oldUrl && oldUrl !== newUrl) {
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
+          revocationTimersRef.current.delete(timerId);
           try {
             URL.revokeObjectURL(oldUrl);
           } catch {
             // Ignore revocation errors
           }
         }, 3000);
+        revocationTimersRef.current.add(timerId);
       }
     } catch (err: any) {
       if (!isMountedRef.current || seq !== renderSeqRef.current) return;
       console.error('Error generating PDF preview:', err);
       setRenderError(err?.message || 'Failed to render PDF document');
       setIsRendering(false);
-      setIsInitialRender(false);
+      isInitialMountRef.current = false;
     }
   }, []);
 
-  // Debounced PDF generation effect
+  // Debounced PDF generation effect driven by semantic form changes
   useEffect(() => {
-    isMountedRef.current = true;
+    if (!calculations.canExport) {
+      setIsRendering(false);
+      return;
+    }
+
+    const serializedData = JSON.stringify(data);
+    // If form data has not semantically changed and preview URL exists, avoid redundant generation
+    if (serializedData === lastRenderedDataRef.current && pdfUrl !== null) {
+      return;
+    }
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // For the very first render, execute quickly (50ms); for subsequent edits debounce by 350ms
-    const delay = isInitialRender ? 50 : 350;
+    // Invalidate any in-flight async render immediately when a new update is scheduled
+    renderSeqRef.current++;
+
+    // Fast 50ms for initial render, 350ms debounce for subsequent user edits
+    const delay = isInitialMountRef.current ? 50 : 350;
 
     debounceTimerRef.current = setTimeout(() => {
       generatePdfBlob(data, calculations);
@@ -92,12 +107,18 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [data, calculations, generatePdfBlob, isInitialRender]);
+  }, [data, calculations, generatePdfBlob, pdfUrl]);
 
-  // Clean up blob URL when unmounting
+  // Clean up timers and blob URLs upon unmount
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      revocationTimersRef.current.forEach((id) => clearTimeout(id));
+      revocationTimersRef.current.clear();
       if (currentUrlRef.current) {
         try {
           URL.revokeObjectURL(currentUrlRef.current);
@@ -142,13 +163,16 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
   };
 
   const handleForceRefresh = () => {
+    lastRenderedDataRef.current = '';
     generatePdfBlob(data, calculations);
   };
 
+  const isInitialLoading = isRendering && !pdfUrl;
+
   return (
-    <section className="bg-white rounded-xl shadow-xs border border-slate-200 p-5 flex flex-col h-full min-h-[620px] space-y-4">
+    <section className="bg-white rounded-xl shadow-xs border border-slate-200 p-5 flex flex-col h-full xl:max-h-[calc(100vh-2rem)] space-y-4">
       {/* Header & Download Controls */}
-      <div className="border-b border-slate-100 pb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="border-b border-slate-100 pb-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center space-x-2">
           <FileText className="w-5 h-5 text-blue-600" />
           <div>
@@ -198,7 +222,7 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
 
       {/* Validation / Blocking Errors Alert */}
       {!calculations.canExport && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs space-y-1">
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs space-y-1 shrink-0">
           <div className="flex items-center space-x-2 font-bold text-rose-900">
             <AlertOctagon className="w-4 h-4 text-rose-600 shrink-0" />
             <span>PDF Export Blocked by Validation Errors:</span>
@@ -213,10 +237,10 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
         </div>
       )}
 
-      {/* Preview Viewer Container with Persistent Iframe */}
-      <div className="flex-1 w-full bg-slate-100/80 rounded-lg border border-slate-200 overflow-hidden flex flex-col items-center justify-center relative min-h-[540px]">
+      {/* Preview Viewer Container with Persistent Iframe (No key={pdfUrl} to avoid unmounting) */}
+      <div className="flex-1 w-full bg-slate-100/80 rounded-lg border border-slate-200 overflow-hidden flex flex-col items-center justify-center relative min-h-[360px] xl:min-h-0">
         {/* Subtle non-intrusive update indicator overlay */}
-        {isRendering && !isInitialRender && (
+        {isRendering && pdfUrl && (
           <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-xs border border-blue-200 px-3 py-1.5 rounded-full shadow-md text-xs font-semibold text-blue-700 flex items-center space-x-2 animate-pulse">
             <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" />
             <span>Updating preview...</span>
@@ -224,7 +248,7 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
         )}
 
         {/* Initial Loading State */}
-        {isInitialRender && isRendering ? (
+        {isInitialLoading ? (
           <div className="flex flex-col items-center space-y-3 py-16 text-slate-500">
             <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
             <p className="text-xs font-semibold">Generating live executive report preview...</p>
@@ -244,10 +268,9 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
           </div>
         ) : pdfUrl ? (
           <iframe
-            key={pdfUrl}
             src={`${pdfUrl}#toolbar=0&navpanes=0`}
             title="PDF Report Preview"
-            className="w-full h-full min-h-[560px] border-0 rounded-lg shadow-inner"
+            className="w-full flex-1 h-full min-h-[360px] xl:min-h-0 border-0 rounded-lg shadow-inner"
           />
         ) : (
           <div className="text-xs text-slate-400 py-12 text-center p-4">
@@ -258,7 +281,7 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
       </div>
 
       {/* Quality Footnote */}
-      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 shrink-0">
         <span className="flex items-center space-x-1">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
           <span>Dynamic pagination with repeated headers & vector analytics</span>
