@@ -2,17 +2,23 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ProjectFormData, ProjectFormSchema } from './types';
-import { INITIAL_DEMO_DATA, GHAZLAN_EXAMPLE_DATA, EMPTY_FORM_DATA } from './utils/defaults';
+import {
+  INITIAL_DEMO_DATA,
+  GHAZLAN_EXAMPLE_DATA,
+  LARGE_20_ROW_EXAMPLE_DATA,
+  EMPTY_FORM_DATA,
+} from './utils/defaults';
 import { calculateProjectMetrics } from './utils/calculations';
 import { loadDraftFromStorage, saveDraftToStorage, clearDraftFromStorage } from './utils/storage';
 import { Header } from './components/Header';
 import { ProjectInfoForm } from './components/ProjectInfoForm';
 import { ScopeTableForm } from './components/ScopeTableForm';
+import { AnalyticsSection } from './components/AnalyticsSection';
 import { PdfPreviewPanel } from './components/PdfPreviewPanel';
 import { Check, Info } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [saveStatus, setSaveStatus] = useState<string>('Saved');
+  const [saveStatus, setSaveStatus] = useState<string>('Draft Saved Locally');
 
   const initialValues = useMemo(() => {
     return loadDraftFromStorage();
@@ -58,6 +64,11 @@ export const App: React.FC = () => {
     saveDraftToStorage(GHAZLAN_EXAMPLE_DATA);
   };
 
+  const handleLoadLargeExample = () => {
+    reset(LARGE_20_ROW_EXAMPLE_DATA);
+    saveDraftToStorage(LARGE_20_ROW_EXAMPLE_DATA);
+  };
+
   const handleResetDefault = () => {
     reset(INITIAL_DEMO_DATA);
     saveDraftToStorage(INITIAL_DEMO_DATA);
@@ -73,31 +84,32 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-100/90 flex flex-col font-sans text-slate-900">
       {/* Top Header */}
       <Header
         onLoadExample={handleLoadExample}
+        onLoadLargeExample={handleLoadLargeExample}
         onResetDefault={handleResetDefault}
         onClearAll={handleClearAll}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Save indicator & Notice banner */}
+        {/* Status indicator bar */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4 text-xs text-slate-500">
           <div className="flex items-center space-x-1.5">
             <Check className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{saveStatus}</span>
+            <span className="font-medium text-slate-700">{saveStatus}</span>
           </div>
           <div className="flex items-center space-x-1.5 text-slate-400">
             <Info className="w-3.5 h-3.5" />
-            <span>All entries remain strictly on your local browser. No server storage or API transmission.</span>
+            <span>All entries remain strictly on your local browser. No server storage or network transmission.</span>
           </div>
         </div>
 
-        {/* Responsive Grid: Side-by-Side on Desktop, Stacked on Mobile */}
+        {/* Responsive Grid: Side-by-Side on XL, Stacked on Mobile/Tablet */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-          {/* Left / Top: Data Entry Forms (7 cols on XL) */}
+          {/* Left / Top: Data Entry & Analytics Forms (7 cols on XL) */}
           <div className="xl:col-span-7 space-y-6">
             {/* 1. Project Info */}
             <ProjectInfoForm
@@ -107,7 +119,14 @@ export const App: React.FC = () => {
               calculations={calculations}
             />
 
-            {/* 2. Scope Table */}
+            {/* 2. Analytics & Valuation Insights */}
+            <AnalyticsSection
+              calculations={calculations}
+              currency={formData.currency || 'SAR'}
+              projectName={formData.projectName || ''}
+            />
+
+            {/* 3. Scope Table */}
             <ScopeTableForm
               register={register}
               errors={errors}
@@ -131,7 +150,7 @@ export const App: React.FC = () => {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
         <p>
-          &copy; 2026 KAYAN CAPITAL HOLDINGS &bull; Progress Report PDF Generator &bull; Production Ready
+          &copy; 2026 KAYAN CAPITAL HOLDINGS &bull; Progress Report PDF Generator &bull; Multi-Page & Analytics
         </p>
       </footer>
     </div>

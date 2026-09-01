@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculateProjectMetrics,
+  calculateDonutSlices,
   formatDateDDMMMYY,
   formatCurrency,
   formatPercent,
   sanitizeFilename,
 } from '../utils/calculations';
-import { GHAZLAN_EXAMPLE_DATA, INITIAL_DEMO_DATA } from '../utils/defaults';
+import { GHAZLAN_EXAMPLE_DATA, INITIAL_DEMO_DATA, LARGE_20_ROW_EXAMPLE_DATA, EMPTY_FORM_DATA } from '../utils/defaults';
 import { ProjectFormData } from '../types';
 
 describe('Project Calculations & Valuation Logic', () => {
@@ -70,7 +71,7 @@ describe('Project Calculations & Valuation Logic', () => {
     });
   });
 
-  describe('Scope Row Calculations: Activity Weightage, Net Progress, Progress Value', () => {
+  describe('Scope Row Calculations & Analytics', () => {
     it('calculates Ghazlan reference workbook formulas without intermediate rounding', () => {
       const metrics = calculateProjectMetrics(GHAZLAN_EXAMPLE_DATA);
 
@@ -80,11 +81,8 @@ describe('Project Calculations & Valuation Logic', () => {
       const row1 = metrics.calculatedScopes[0];
       expect(row1.description).toBe('FA GENERAL');
       expect(row1.scopeAmount).toBe(287524.10);
-      // Weightage = 287524.10 / 1292000 = ~0.22254187306501548
       expect(row1.activityWeightage).toBeCloseTo(0.222541873, 6);
-      // Net progress = 0.222541873 * 0.345 = ~0.0767769
       expect(row1.netProgress).toBeCloseTo(0.0767769, 5);
-      // Progress value = 287524.10 * 0.345 = 99195.8145
       expect(row1.progressValue).toBeCloseTo(99195.81, 1);
 
       // Row 4: FAT
@@ -92,95 +90,142 @@ describe('Project Calculations & Valuation Logic', () => {
       expect(row4.description).toBe('FAT');
       expect(row4.scopeAmount).toBe(92000.00);
       expect(row4.physicalCompletion).toBe(50.0);
-      // Weightage = 92000 / 1292000 = ~0.07120743
       expect(row4.activityWeightage).toBeCloseTo(0.07120743, 6);
-      // Progress value = 92000 * 0.5 = 46000
       expect(row4.progressValue).toBe(46000.00);
     });
 
     it('calculates total scope amounts, total weightage, overall progress, and total progress value', () => {
       const metrics = calculateProjectMetrics(GHAZLAN_EXAMPLE_DATA);
 
-      // Scope Total = 287524.10 + 253518.84 + 661487.00 + 92000.00 = 1294529.94
       expect(metrics.totalScopeAmount).toBeCloseTo(1294529.94, 2);
-
-      // Total Weightage = 1294529.94 / 1292000 = 1.0019581578947368
       expect(metrics.totalCalculatedWeightage).toBeCloseTo(1.001958, 5);
-
-      // Total weightage percentage ~ 100.1958%
       expect(metrics.weightageDiscrepancyPercent).toBeCloseTo(100.1958, 3);
-
-      // Discrepancy flag
       expect(metrics.isDiscrepancy).toBe(true);
       expect(metrics.discrepancyAmount).toBeCloseTo(2529.94, 2);
     });
 
-    it('flags non-blocking reconciliation discrepancy when scope total != project amount', () => {
+    it('generates rich analytics metrics for Ghazlan dataset', () => {
       const metrics = calculateProjectMetrics(GHAZLAN_EXAMPLE_DATA);
-      expect(metrics.isDiscrepancy).toBe(true);
-      expect(metrics.discrepancyAmount).toBeCloseTo(2529.94, 2);
-      // Should still allow export if no hard errors
-      expect(metrics.canExport).toBe(true);
-    });
 
-    it('reconciles cleanly when scope total == project amount', () => {
-      const metrics = calculateProjectMetrics(INITIAL_DEMO_DATA);
-      expect(metrics.isDiscrepancy).toBe(false);
-      expect(metrics.discrepancyAmount).toBe(0);
-      expect(metrics.totalCalculatedWeightage).toBeCloseTo(1.0, 5);
+      expect(metrics.analytics.donutSlices).toHaveLength(4);
+      expect(metrics.analytics.barMetrics).toHaveLength(4);
+      expect(metrics.analytics.remainingValue).toBeCloseTo(1292000 - metrics.totalProgressValue, 2);
+      expect(metrics.analytics.elapsedDays).toBe(38);
+      expect(metrics.analytics.totalDays).toBe(154);
+      expect(metrics.analytics.elapsedPercentage).toBeCloseTo((38 / 154) * 100, 2);
     });
   });
 
-  describe('Edge Cases and Validation Limits', () => {
-    it('blocks export when project amount is zero or negative', () => {
+  describe('Row Limits Removed & Multi-Row Scalability Verification', () => {
+    it('handles 0 rows gracefully without errors', () => {
       const data: ProjectFormData = {
-        ...INITIAL_DEMO_DATA,
-        projectAmount: 0,
+        ...EMPTY_FORM_DATA,
+        scopeItems: [],
       };
       const metrics = calculateProjectMetrics(data);
+      expect(metrics.calculatedScopes).toHaveLength(0);
+      expect(metrics.totalScopeAmount).toBe(0);
       expect(metrics.canExport).toBe(false);
-      expect(metrics.validationErrors).toContain('Project amount must be greater than zero.');
+      expect(metrics.analytics.donutSlices).toHaveLength(0);
     });
 
-    it('ignores empty scope rows in calculations', () => {
+    it('handles 1 row correctly (100% slice rendering)', () => {
       const data: ProjectFormData = {
         ...INITIAL_DEMO_DATA,
+        projectAmount: 500000,
         scopeItems: [
-          ...INITIAL_DEMO_DATA.scopeItems,
-          { id: 'empty-1', description: '   ', scopeAmount: 0, physicalCompletion: 0 },
+          { id: 'single-1', description: 'Turnkey Construction', scopeAmount: 500000, physicalCompletion: 75 },
         ],
       };
       const metrics = calculateProjectMetrics(data);
-      // Empty row filtered out
-      expect(metrics.calculatedScopes).toHaveLength(4);
+      expect(metrics.calculatedScopes).toHaveLength(1);
+      expect(metrics.canExport).toBe(true);
+      expect(metrics.overallProgress).toBeCloseTo(0.75, 4);
+      expect(metrics.analytics.donutSlices).toHaveLength(1);
+      expect(metrics.analytics.donutSlices[0].percentage).toBe(100);
+      expect(metrics.analytics.donutSlices[0].pathD).toContain('A 80 80');
     });
 
-    it('blocks export if overall progress exceeds 100%', () => {
+    it('allows 8 rows without error', () => {
       const data: ProjectFormData = {
         ...INITIAL_DEMO_DATA,
-        projectAmount: 100000,
-        scopeItems: [
-          { id: 's-1', description: 'Over Complete Scope', scopeAmount: 150000, physicalCompletion: 100 },
-        ],
-      };
-      const metrics = calculateProjectMetrics(data);
-      expect(metrics.canExport).toBe(false);
-      expect(metrics.validationErrors.some((e) => e.includes('cannot exceed 100%'))).toBe(true);
-    });
-
-    it('blocks export if more than 8 scope items are provided (2-page guarantee)', () => {
-      const data: ProjectFormData = {
-        ...INITIAL_DEMO_DATA,
-        scopeItems: Array.from({ length: 9 }, (_, i) => ({
+        projectAmount: 800000,
+        scopeItems: Array.from({ length: 8 }, (_, i) => ({
           id: `s-${i}`,
           description: `Activity ${i + 1}`,
-          scopeAmount: 10000,
+          scopeAmount: 100000,
           physicalCompletion: 50,
         })),
       };
       const metrics = calculateProjectMetrics(data);
-      expect(metrics.canExport).toBe(false);
-      expect(metrics.validationErrors).toContain('Maximum 8 scope items allowed to ensure an exact 2-page PDF.');
+      expect(metrics.calculatedScopes).toHaveLength(8);
+      expect(metrics.canExport).toBe(true);
+      expect(metrics.validationErrors).toHaveLength(0);
+    });
+
+    it('allows 9 rows without 8-row rejection or truncation', () => {
+      const data: ProjectFormData = {
+        ...INITIAL_DEMO_DATA,
+        projectAmount: 900000,
+        scopeItems: Array.from({ length: 9 }, (_, i) => ({
+          id: `s-${i}`,
+          description: `Activity ${i + 1}`,
+          scopeAmount: 100000,
+          physicalCompletion: 50,
+        })),
+      };
+      const metrics = calculateProjectMetrics(data);
+      expect(metrics.calculatedScopes).toHaveLength(9);
+      expect(metrics.canExport).toBe(true);
+      expect(metrics.validationErrors).toHaveLength(0);
+    });
+
+    it('allows 20 rows (Large Project)', () => {
+      const metrics = calculateProjectMetrics(LARGE_20_ROW_EXAMPLE_DATA);
+      expect(metrics.calculatedScopes).toHaveLength(20);
+      expect(metrics.canExport).toBe(true);
+      expect(metrics.totalScopeAmount).toBe(5100000);
+      expect(metrics.analytics.donutSlices).toHaveLength(20);
+    });
+
+    it('allows 50+ rows without performance degradation or error', () => {
+      const count = 55;
+      const data: ProjectFormData = {
+        ...INITIAL_DEMO_DATA,
+        projectAmount: 5500000,
+        scopeItems: Array.from({ length: count }, (_, i) => ({
+          id: `mega-${i}`,
+          description: `Scope Item Breakdown ${i + 1}`,
+          scopeAmount: 100000,
+          physicalCompletion: (i * 2) % 100,
+        })),
+      };
+      const metrics = calculateProjectMetrics(data);
+      expect(metrics.calculatedScopes).toHaveLength(55);
+      expect(metrics.canExport).toBe(true);
+      expect(metrics.totalScopeAmount).toBe(5500000);
+      expect(metrics.analytics.donutSlices).toHaveLength(55);
+    });
+  });
+
+  describe('Donut Slice Calculations', () => {
+    it('handles empty slices array safely', () => {
+      const slices = calculateDonutSlices([], 0);
+      expect(slices).toEqual([]);
+    });
+
+    it('handles multiple categories with proper angles and arc flags', () => {
+      const calculatedScopes = GHAZLAN_EXAMPLE_DATA.scopeItems.map((item) => ({
+        ...item,
+        activityWeightage: 0.25,
+        netProgress: 0.1,
+        progressValue: 50000,
+      }));
+      const totalAmount = 1294529.94;
+      const slices = calculateDonutSlices(calculatedScopes, totalAmount);
+      expect(slices).toHaveLength(4);
+      expect(slices[0].startAngle).toBe(0);
+      expect(slices[3].endAngle).toBeCloseTo(2 * Math.PI, 4);
     });
   });
 

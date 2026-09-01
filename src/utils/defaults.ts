@@ -80,6 +80,42 @@ export const GHAZLAN_EXAMPLE_DATA: ProjectFormData = {
   ],
 };
 
+export const LARGE_20_ROW_EXAMPLE_DATA: ProjectFormData = {
+  reportDate: '2026-09-01',
+  projectName: 'Petrochemical Complex Expansion (20 Scope Activities)',
+  client: 'SABIC Petrochemical Division',
+  contractor: 'KAYAN CAPITAL HOLDINGS',
+  poNumber: 'PO-SAB-2026-8832',
+  projectStartDate: '2026-03-01',
+  projectEndDate: '2026-12-31',
+  projectAmount: 5100000.00,
+  currency: 'SAR',
+  projectLeader: 'ERFAN AHMAD',
+  showReconciliationNote: false,
+  scopeItems: [
+    { id: 'l-1', description: 'Geotechnical Soil Survey & Grading', scopeAmount: 150000.00, physicalCompletion: 100.0 },
+    { id: 'l-2', description: 'Subsurface Concrete Foundations', scopeAmount: 450000.00, physicalCompletion: 95.0 },
+    { id: 'l-3', description: 'Structural Steel Framing (Zone A)', scopeAmount: 380000.00, physicalCompletion: 80.0 },
+    { id: 'l-4', description: 'Structural Steel Framing (Zone B)', scopeAmount: 320000.00, physicalCompletion: 70.0 },
+    { id: 'l-5', description: 'Primary Pressure Vessel Installation', scopeAmount: 600000.00, physicalCompletion: 65.0 },
+    { id: 'l-6', description: 'Process Piping Fabrication & Welding', scopeAmount: 500000.00, physicalCompletion: 50.0 },
+    { id: 'l-7', description: 'Cryogenic Insulation & Heat Tracing', scopeAmount: 220000.00, physicalCompletion: 40.0 },
+    { id: 'l-8', description: 'High-Voltage Switchgear & Transformers', scopeAmount: 400000.00, physicalCompletion: 45.0 },
+    { id: 'l-9', description: 'Motor Control Centers (MCC-1 & MCC-2)', scopeAmount: 280000.00, physicalCompletion: 30.0 },
+    { id: 'l-10', description: 'Instrumentation & Distributed Control System', scopeAmount: 350000.00, physicalCompletion: 25.0 },
+    { id: 'l-11', description: 'FM-200 Fire Suppression System', scopeAmount: 180000.00, physicalCompletion: 35.0 },
+    { id: 'l-12', description: 'Fire Hydrant Network & Deluge Skids', scopeAmount: 190000.00, physicalCompletion: 20.0 },
+    { id: 'l-13', description: 'Industrial HVAC & Air Handling Units', scopeAmount: 160000.00, physicalCompletion: 15.0 },
+    { id: 'l-14', description: 'Emergency Diesel Generator Package', scopeAmount: 250000.00, physicalCompletion: 10.0 },
+    { id: 'l-15', description: 'Perimeter Security & CCTV Monitoring', scopeAmount: 110000.00, physicalCompletion: 10.0 },
+    { id: 'l-16', description: 'Effluent Treatment Piping Tie-Ins', scopeAmount: 140000.00, physicalCompletion: 5.0 },
+    { id: 'l-17', description: 'Factory Acceptance Testing (FAT)', scopeAmount: 90000.00, physicalCompletion: 60.0 },
+    { id: 'l-18', description: 'Site Acceptance Testing (SAT)', scopeAmount: 80000.00, physicalCompletion: 0.0 },
+    { id: 'l-19', description: 'Hydrostatic & Pneumatic Line Proofing', scopeAmount: 100000.00, physicalCompletion: 0.0 },
+    { id: 'l-20', description: 'Final Integrated Commissioning & Handover', scopeAmount: 150000.00, physicalCompletion: 0.0 },
+  ],
+};
+
 export const EMPTY_FORM_DATA: ProjectFormData = {
   reportDate: new Date().toISOString().split('T')[0],
   projectName: '',

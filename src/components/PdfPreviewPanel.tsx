@@ -38,8 +38,8 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
         <div className="flex items-center space-x-2">
           <FileText className="w-5 h-5 text-blue-600" />
           <div>
-            <h2 className="text-base font-bold text-slate-900">3. PDF Preview & Export</h2>
-            <p className="text-xs text-slate-500">Exact 2-Page Executive Document</p>
+            <h2 className="text-base font-bold text-slate-900">3. PDF Live Preview & Export</h2>
+            <p className="text-xs text-slate-500">Executive Multi-Page Document & Analytics</p>
           </div>
         </div>
 
@@ -57,12 +57,12 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
           {instance.loading ? (
             <>
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              Generating PDF...
+              Rendering PDF...
             </>
           ) : (
             <>
               <Download className="w-4 h-4 mr-2" />
-              Download PDF ({filename})
+              Download PDF
             </>
           )}
         </button>
@@ -79,18 +79,18 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
             {calculations.validationErrors.map((err, idx) => (
               <li key={idx}>{err}</li>
             ))}
-            {data.projectAmount <= 0 && <li>Project amount must be positive.</li>}
-            {calculations.calculatedScopes.length === 0 && <li>At least one valid scope item is required.</li>}
+            {data.projectAmount <= 0 && <li>Project amount must be greater than zero.</li>}
+            {calculations.calculatedScopes.length === 0 && <li>At least one valid scope activity is required.</li>}
           </ul>
         </div>
       )}
 
       {/* Preview Viewer Container */}
-      <div className="flex-1 w-full bg-slate-100/80 rounded-lg border border-slate-200 overflow-hidden flex flex-col items-center justify-center relative min-h-[500px]">
+      <div className="flex-1 w-full bg-slate-100/80 rounded-lg border border-slate-200 overflow-hidden flex flex-col items-center justify-center relative min-h-[520px]">
         {instance.loading ? (
           <div className="flex flex-col items-center space-y-3 py-16 text-slate-500">
             <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-            <p className="text-xs font-semibold">Rendering live 2-page report...</p>
+            <p className="text-xs font-semibold">Rendering live multi-page report with analytics...</p>
           </div>
         ) : instance.error ? (
           <div className="p-6 text-center text-rose-600 text-xs">
@@ -113,9 +113,11 @@ export const PdfPreviewPanel: React.FC<PdfPreviewPanelProps> = ({ data, calculat
       <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
         <span className="flex items-center space-x-1">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
-          <span>Guaranteed exactly 2 Letter portrait pages (Cover + Scope Summary)</span>
+          <span>Dynamic pagination with repeated headers & vector analytics</span>
         </span>
-        <span className="font-mono text-slate-400">{filename}</span>
+        <span className="font-mono text-slate-400 truncate max-w-[200px]" title={filename}>
+          {filename}
+        </span>
       </div>
     </section>
   );

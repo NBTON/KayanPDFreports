@@ -28,6 +28,39 @@ export interface ProjectFormData {
   showReconciliationNote?: boolean;
 }
 
+export interface DonutSlice {
+  label: string;
+  value: number;
+  percentage: number;
+  color: string;
+  startAngle: number;
+  endAngle: number;
+  pathD: string;
+}
+
+export interface BarMetric {
+  label: string;
+  scopeAmount: number;
+  progressValue: number;
+  physicalCompletion: number;
+  activityWeightage: number;
+  color: string;
+}
+
+export interface AnalyticsData {
+  donutSlices: DonutSlice[];
+  barMetrics: BarMetric[];
+  totalScopeAmount: number;
+  totalProgressValue: number;
+  remainingValue: number;
+  overallProgress: number;
+  elapsedDays: number;
+  totalDays: number;
+  elapsedPercentage: number;
+  schedulePerformanceIndex: number | null; // e.g. overallProgress / elapsedRatio
+  topActivities: CalculatedScopeItem[];
+}
+
 export interface ProjectCalculations {
   projectDuration: number;
   dayNumberDisplay: string;
@@ -43,6 +76,7 @@ export interface ProjectCalculations {
   weightageDiscrepancyPercent: number;
   validationErrors: string[];
   canExport: boolean;
+  analytics: AnalyticsData;
 }
 
 export const ScopeItemSchema = z.object({
@@ -67,8 +101,7 @@ export const ProjectFormSchema = z.object({
   currency: z.string().min(1, 'Currency is required').default('SAR'),
   projectLeader: z.string().min(1, 'Project leader is required'),
   scopeItems: z.array(ScopeItemSchema)
-    .min(1, 'At least one scope row is required')
-    .max(8, 'Maximum 8 scope rows supported for 2-page layout'),
+    .min(1, 'At least one scope row is required'),
   showReconciliationNote: z.boolean().optional(),
 }).refine((data) => {
   if (data.projectStartDate && data.projectEndDate) {
@@ -79,3 +112,4 @@ export const ProjectFormSchema = z.object({
   message: 'Project end date cannot be earlier than start date',
   path: ['projectEndDate'],
 });
+

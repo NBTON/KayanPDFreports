@@ -1,4 +1,26 @@
-import { ProjectFormData, ProjectCalculations, CalculatedScopeItem, ScopeItem } from '../types';
+import {
+  ProjectFormData,
+  ProjectCalculations,
+  CalculatedScopeItem,
+  ScopeItem,
+  AnalyticsData,
+  DonutSlice,
+  BarMetric,
+} from '../types';
+
+export const CHART_COLORS: string[] = [
+  '#2563EB', // Royal Blue
+  '#0D9488', // Teal
+  '#D97706', // Amber
+  '#7C3AED', // Purple
+  '#E11D48', // Rose
+  '#059669', // Emerald
+  '#4F46E5', // Indigo
+  '#EA580C', // Orange
+  '#0891B2', // Cyan
+  '#9333EA', // Violet
+  '#64748B', // Slate
+];
 
 export function parseDateToUTC(dateStr: string): Date | null {
   if (!dateStr || typeof dateStr !== 'string') return null;
@@ -60,6 +82,66 @@ export function sanitizeFilename(projectName: string, reportDate: string): strin
   return `Progress_Report_${cleanName}_${cleanDate}.pdf`;
 }
 
+export function calculateDonutSlices(
+  items: CalculatedScopeItem[],
+  totalAmount: number,
+  cx: number = 100,
+  cy: number = 100,
+  outerRadius: number = 80,
+  innerRadius: number = 50
+): DonutSlice[] {
+  if (!items || items.length === 0 || totalAmount <= 0) {
+    return [];
+  }
+
+  let currentAngle = 0;
+  const slices: DonutSlice[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const amount = Math.max(item.scopeAmount, 0);
+    const percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0;
+    const sliceAngle = totalAmount > 0 ? (amount / totalAmount) * 2 * Math.PI : 0;
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + sliceAngle;
+    const color = CHART_COLORS[i % CHART_COLORS.length];
+
+    let pathD = '';
+    if (percentage >= 99.999 || items.length === 1) {
+      // Full circle ring path
+      pathD = `M ${cx - outerRadius} ${cy} A ${outerRadius} ${outerRadius} 0 1 0 ${cx + outerRadius} ${cy} A ${outerRadius} ${outerRadius} 0 1 0 ${cx - outerRadius} ${cy} M ${cx - innerRadius} ${cy} A ${innerRadius} ${innerRadius} 0 1 1 ${cx + innerRadius} ${cy} A ${innerRadius} ${innerRadius} 0 1 1 ${cx - innerRadius} ${cy} Z`;
+    } else if (sliceAngle > 0.001) {
+      const x1_out = cx + outerRadius * Math.sin(startAngle);
+      const y1_out = cy - outerRadius * Math.cos(startAngle);
+      const x2_out = cx + outerRadius * Math.sin(endAngle);
+      const y2_out = cy - outerRadius * Math.cos(endAngle);
+
+      const x2_in = cx + innerRadius * Math.sin(endAngle);
+      const y2_in = cy - innerRadius * Math.cos(endAngle);
+      const x1_in = cx + innerRadius * Math.sin(startAngle);
+      const y1_in = cy - innerRadius * Math.cos(startAngle);
+
+      const largeArcFlag = sliceAngle > Math.PI ? 1 : 0;
+
+      pathD = `M ${x1_out.toFixed(2)} ${y1_out.toFixed(2)} A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2_out.toFixed(2)} ${y2_out.toFixed(2)} L ${x2_in.toFixed(2)} ${y2_in.toFixed(2)} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x1_in.toFixed(2)} ${y1_in.toFixed(2)} Z`;
+    }
+
+    slices.push({
+      label: item.description || `Activity ${i + 1}`,
+      value: amount,
+      percentage,
+      color,
+      startAngle,
+      endAngle,
+      pathD,
+    });
+
+    currentAngle = endAngle;
+  }
+
+  return slices;
+}
+
 export function calculateProjectMetrics(data: ProjectFormData): ProjectCalculations {
   const validationErrors: string[] = [];
 
@@ -107,8 +189,10 @@ export function calculateProjectMetrics(data: ProjectFormData): ProjectCalculati
   }
 
   // 4. Calculate scope rows
-  const scopeItems = (data.scopeItems || []).filter((item) => (item.description || '').trim() !== '' || Number(item.scopeAmount) > 0);
-  
+  const scopeItems = (data.scopeItems || []).filter(
+    (item) => (item.description || '').trim() !== '' || Number(item.scopeAmount) > 0
+  );
+
   let totalScopeAmount = 0;
   let totalCalculatedWeightage = 0;
   let overallProgress = 0;
@@ -151,11 +235,47 @@ export function calculateProjectMetrics(data: ProjectFormData): ProjectCalculati
     validationErrors.push(`Overall project progress (${(overallProgress * 100).toFixed(2)}%) cannot exceed 100%.`);
   }
 
-  if (scopeItems.length > 8) {
-    validationErrors.push('Maximum 8 scope items allowed to ensure an exact 2-page PDF.');
+  const canExport = validationErrors.length === 0 && projectAmount > 0 && calculatedScopes.length > 0;
+
+  // 5. Calculate Analytics & Chart Metrics
+  const donutSlices = calculateDonutSlices(calculatedScopes, totalScopeAmount);
+  const barMetrics: BarMetric[] = calculatedScopes.map((scope, idx) => ({
+    label: scope.description || `Activity ${idx + 1}`,
+    scopeAmount: scope.scopeAmount,
+    progressValue: scope.progressValue,
+    physicalCompletion: scope.physicalCompletion,
+    activityWeightage: scope.activityWeightage,
+    color: CHART_COLORS[idx % CHART_COLORS.length],
+  }));
+
+  const remainingValue = Math.max(projectAmount - totalProgressValue, 0);
+
+  let elapsedDays = 0;
+  if (dayNumberStatus === 'during' && dayNumber !== null) {
+    elapsedDays = dayNumber;
+  } else if (dayNumberStatus === 'past_due' && projectDuration > 0) {
+    elapsedDays = projectDuration;
   }
 
-  const canExport = validationErrors.length === 0 && projectAmount > 0 && calculatedScopes.length > 0;
+  const totalDays = projectDuration || 1;
+  const elapsedPercentage = projectDuration > 0 ? Math.min(Math.max((elapsedDays / projectDuration) * 100, 0), 100) : 0;
+  const schedulePerformanceIndex = elapsedPercentage > 0 ? (overallProgress * 100) / elapsedPercentage : null;
+
+  const topActivities = [...calculatedScopes].sort((a, b) => b.scopeAmount - a.scopeAmount).slice(0, 5);
+
+  const analytics: AnalyticsData = {
+    donutSlices,
+    barMetrics,
+    totalScopeAmount,
+    totalProgressValue,
+    remainingValue,
+    overallProgress,
+    elapsedDays,
+    totalDays,
+    elapsedPercentage,
+    schedulePerformanceIndex,
+    topActivities,
+  };
 
   return {
     projectDuration,
@@ -172,5 +292,7 @@ export function calculateProjectMetrics(data: ProjectFormData): ProjectCalculati
     weightageDiscrepancyPercent,
     validationErrors,
     canExport,
+    analytics,
   };
 }
+

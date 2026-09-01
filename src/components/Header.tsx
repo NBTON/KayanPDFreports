@@ -1,20 +1,22 @@
 import React from 'react';
-import { RefreshCw, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { RefreshCw, RotateCcw, ShieldCheck, Sparkles, Layers } from 'lucide-react';
 import { KAYAN_LOGO_BASE64 } from '../assets/logoBase64';
 
 interface HeaderProps {
   onLoadExample: () => void;
+  onLoadLargeExample: () => void;
   onResetDefault: () => void;
   onClearAll: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onLoadExample,
+  onLoadLargeExample,
   onResetDefault,
   onClearAll,
 }) => {
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
         {/* Logo & Title */}
         <div className="flex items-center space-x-3.5">
@@ -31,31 +33,42 @@ export const Header: React.FC<HeaderProps> = ({
                 Progress Report PDF Generator
               </h1>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                v1.0
+                v2.0 Multi-Page
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
-              KAYAN CAPITAL HOLDINGS &bull; Two-Page Contractual Progress Valuation
+              KAYAN CAPITAL HOLDINGS &bull; Executive Progress Valuation & Analytics
             </p>
           </div>
         </div>
 
         {/* Action Controls & Privacy Badge */}
-        <div className="flex items-center flex-wrap gap-2.5">
+        <div className="flex items-center flex-wrap gap-2">
           {/* Privacy badge */}
-          <div className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200">
+          <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>100% Client-Side &bull; Local Only</span>
+            <span>100% Client-Side &bull; Local Privacy</span>
           </div>
 
+          {/* Preset Buttons */}
           <button
             type="button"
             onClick={onLoadExample}
             className="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 transition-colors focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            title="Load reference data from Ghazlan Project example"
+            title="Load reference 4-row data from Ghazlan Project"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
-            Load Example
+            Ghazlan (4 Rows)
+          </button>
+
+          <button
+            type="button"
+            onClick={onLoadLargeExample}
+            className="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 transition-colors focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            title="Load 20-row dataset to test multi-page pagination & analytics"
+          >
+            <Layers className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+            Multi-Page (20 Rows)
           </button>
 
           <button
