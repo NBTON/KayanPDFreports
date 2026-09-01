@@ -1,0 +1,393 @@
+import { StyleSheet } from '@react-pdf/renderer';
+
+export const pdfStyles = StyleSheet.create({
+  page: {
+    size: 'LETTER',
+    orientation: 'portrait',
+    padding: 0,
+    backgroundColor: '#FFFFFF',
+    fontFamily: 'Helvetica',
+    fontSize: 9.5,
+    color: '#2D3748',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  
+  // Page container & Outer Border
+  pageWrapper: {
+    padding: 24,
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+
+  // Header Banner
+  headerContainer: {
+    backgroundColor: '#7BB9EF',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  headerLeft: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerLogoWrapper: {
+    width: 52,
+    height: 52,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    padding: 4,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerLogo: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+  },
+  headerTitleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontFamily: 'Helvetica-Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  headerSub: {
+    fontSize: 9,
+    color: '#EAF3FD',
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  headerRightBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  headerDateText: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#FFFFFF',
+  },
+
+  // Cover Page Content Container
+  coverCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 18,
+    marginVertical: 'auto',
+  },
+  coverCardHeader: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#7BB9EF',
+    paddingBottom: 8,
+    marginBottom: 14,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  coverCardTitle: {
+    fontSize: 13,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1B365D',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  coverCardSubtitle: {
+    fontSize: 8.5,
+    color: '#718096',
+  },
+
+  // Cover Rows
+  infoRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6.5,
+    borderBottomWidth: 0.75,
+    borderBottomColor: '#E2E8F0',
+    borderBottomStyle: 'dotted',
+  },
+  infoRowHighlight: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+    backgroundColor: '#F7FAFC',
+    borderRadius: 4,
+    borderBottomWidth: 0.75,
+    borderBottomColor: '#CBD5E0',
+    borderBottomStyle: 'dotted',
+    marginVertical: 1,
+  },
+  infoLabel: {
+    width: '38%',
+    fontSize: 9.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#2D3748',
+  },
+  infoValue: {
+    width: '62%',
+    fontSize: 9.5,
+    fontFamily: 'Helvetica',
+    color: '#1A202C',
+  },
+  infoValueBold: {
+    width: '62%',
+    fontSize: 9.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1B365D',
+  },
+  infoValueProgress: {
+    width: '62%',
+    fontSize: 10.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#2B6CB0',
+  },
+
+  // Summary Page Section
+  sectionHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1B365D',
+    letterSpacing: 0.3,
+  },
+  sectionMeta: {
+    fontSize: 8.5,
+    color: '#718096',
+  },
+
+  // Scope Table
+  tableContainer: {
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#7BB9EF',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  tableHeaderRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    backgroundColor: '#7BB9EF',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  tableHeaderCell: {
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 8.5,
+    textTransform: 'uppercase',
+  },
+  tableHeaderCellRight: {
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 8.5,
+    textAlign: 'right',
+    textTransform: 'uppercase',
+  },
+  
+  tableRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    paddingVertical: 7.5,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    borderBottomWidth: 0.75,
+    borderBottomColor: '#E2E8F0',
+    borderBottomStyle: 'dotted',
+    backgroundColor: '#FFFFFF',
+  },
+  tableRowEven: {
+    display: 'flex',
+    flexDirection: 'row',
+    paddingVertical: 7.5,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    borderBottomWidth: 0.75,
+    borderBottomColor: '#E2E8F0',
+    borderBottomStyle: 'dotted',
+    backgroundColor: '#FAFCFF',
+  },
+  tableCellDesc: {
+    width: '36%',
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#2D3748',
+    paddingRight: 6,
+  },
+  tableCellPrice: {
+    width: '18%',
+    fontSize: 8.5,
+    textAlign: 'right',
+    color: '#2D3748',
+  },
+  tableCellWeight: {
+    width: '14%',
+    fontSize: 8.5,
+    textAlign: 'right',
+    color: '#4A5568',
+  },
+  tableCellNet: {
+    width: '14%',
+    fontSize: 8.5,
+    textAlign: 'right',
+    fontFamily: 'Helvetica-Bold',
+    color: '#2B6CB0',
+  },
+  tableCellValue: {
+    width: '18%',
+    fontSize: 8.5,
+    textAlign: 'right',
+    fontFamily: 'Helvetica-Bold',
+    color: '#2D3748',
+  },
+
+  // Table Total Row
+  tableTotalRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    paddingVertical: 8.5,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    backgroundColor: '#EAF3FD',
+    borderTopWidth: 1.5,
+    borderTopColor: '#7BB9EF',
+  },
+  tableTotalCellDesc: {
+    width: '36%',
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1B365D',
+  },
+  tableTotalCellPrice: {
+    width: '18%',
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    color: '#1B365D',
+  },
+  tableTotalCellWeight: {
+    width: '14%',
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    color: '#1B365D',
+  },
+  tableTotalCellNet: {
+    width: '14%',
+    fontSize: 9.5,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    color: '#2B6CB0',
+  },
+  tableTotalCellValue: {
+    width: '18%',
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    color: '#1B365D',
+  },
+
+  // Summary Metrics Banner
+  summaryBanner: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#CBD5E0',
+    padding: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  summaryMetricBlock: {
+    width: '48%',
+  },
+  summaryMetricLabel: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: '#718096',
+    textTransform: 'uppercase',
+    marginBottom: 3,
+  },
+  summaryMetricValue: {
+    fontSize: 14,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1B365D',
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#7BB9EF',
+    borderRadius: 3,
+  },
+
+  // Reconciliation Note Box
+  reconciliationBox: {
+    backgroundColor: '#FFFDF5',
+    borderWidth: 1,
+    borderColor: '#ECC94B',
+    borderRadius: 6,
+    padding: 8,
+    marginBottom: 10,
+  },
+  reconciliationText: {
+    fontSize: 7.5,
+    color: '#744210',
+    lineHeight: 1.3,
+  },
+
+  // Footer
+  footerContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingTop: 8,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 7.5,
+    color: '#A0AEC0',
+  },
+  footerPageNum: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: '#718096',
+  },
+});
